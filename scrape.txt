@@ -1,0 +1,73 @@
+from selenium import webdriver
+from selenium.webdriver.common.action_chains import ActionChains
+from selenium.webdriver.common.keys import Keys
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
+from selenium.webdriver.common.by import By
+from itertools import cycle
+import traceback
+import reader
+import xlrd
+import xlsxwriter
+import keyboard
+import smtplib
+import time
+import sys
+import traceback
+
+
+PATH = "C:\Program Files (x86)\chromedriver.exe"
+driver = webdriver.Chrome(PATH)
+url="https://apex.tracker.gg/apex/leaderboards/stats/all/RankScore?page=1"
+driver.get(url)
+driver.maximize_window()
+outWorkbook = xlsxwriter.Workbook("out.xlsx")
+outSheet = outWorkbook.add_worksheet()
+#updates the excel sheets columns with variable names
+outSheet.write("A1","Rank")
+outSheet.write("B1","Player")
+outSheet.write("C1","Console Type")
+outSheet.write("D1","Rank Score")
+outSheet.write("E1","Level")
+count=2
+count2=2
+#update number in brackets to amount of pages to webscrape
+for i in range(1):
+    try:
+        #gets platform types and updates into excel sheet
+        rows=driver.find_elements(by="class name",value="text")
+        for x in rows:
+            try:
+                first=x.find_element(by="tag name",value="svg")
+                console_string=first.get_attribute("class")
+                if("origin" in console_string):
+                    outSheet.write("C"+str(count),"PC")
+                elif("xbl" in console_string):
+                    outSheet.write("C"+str(count),"Console")
+                elif("psn" in console_string):
+                    outSheet.write("C"+str(count),"Console")
+                count+=1
+            except:
+                pass
+        #gets the ranks, player names, rank scores, and levels and writes to excel
+        #sheet
+        real_rows=driver.find_elements(by="tag name",value="tr")
+        for x in real_rows:
+            try:
+                big=x.find_elements(by="tag name",value="td")
+                outSheet.write("A"+str(count2),big[0].text)
+                outSheet.write("B"+str(count2),big[1].text)
+                outSheet.write("D"+str(count2),big[3].text)
+                outSheet.write("E"+str(count2),big[4].text)
+                count2+=1
+            except:
+                pass
+        #goes to the next page
+        pages=driver.find_element(by="class name",value="pagination")
+        buttons=pages.find_elements(by="tag name",value="div")    
+        buttons[2].click()
+        time.sleep(7)
+    except:
+        pass
+#The information will be viewable in the excel file named out.xlsx
+outWorkbook.close()
